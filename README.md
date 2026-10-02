@@ -29,7 +29,7 @@ A feijoada fica em destaque logo na abertura. O site traz o cardápio real com p
 2. Rode `python3 build/build.py` (só precisa de Python 3, sem instalar nada).
 3. Envie o `index.html` novo.
 
-O número do WhatsApp e o Instagram ficam no começo do `build/build.py`.
+O número do WhatsApp e o Instagram (@cearagrillrestaurante) ficam no `build/build.py`.
 
 ## Como publicar
 
@@ -38,7 +38,7 @@ O número do WhatsApp e o Instagram ficam no começo do `build/build.py`.
 
 ## Confirmar com o restaurante antes de publicar
 
-- Se o (11) 93005-6723 é WhatsApp e se o Instagram é mesmo @cearagrill_
+- Se o (11) 93005-6723 é WhatsApp
 - Horário de funcionamento e dias e valor da feijoada (não estão nos flyers)
 - "Filé de peixe panga frito": no flyer está escrito "Panca"
 - Se "Costelinha assada, frango assado, linguiça assada e calabresa" é uma escolha entre as carnes ou um prato com todas
