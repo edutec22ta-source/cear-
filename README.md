@@ -2,7 +2,9 @@
 
 Site de página única do **Restaurante Ceará Grill**, na Av. Guarapiranga, 2598 – Guarapiranga, São Paulo/SP.
 
-A feijoada fica em destaque logo na abertura. O site traz o cardápio real com preços e monta o pedido para enviar pelo WhatsApp (11) 93005-6723.
+A feijoada fica em destaque logo na abertura. O site traz o cardápio real com preços e monta o pedido para enviar pelo WhatsApp do restaurante.
+
+> **Site em demonstração.** Enquanto não é vendido, o site mostra o WhatsApp (99) 99999-9999, não exibe o Instagram, os botões do WhatsApp mostram uma prévia da mensagem e o Google não indexa a página.
 
 ## O que tem no site
 
@@ -29,7 +31,15 @@ A feijoada fica em destaque logo na abertura. O site traz o cardápio real com p
 2. Rode `python3 build/build.py` (só precisa de Python 3, sem instalar nada).
 3. Envie o `index.html` novo.
 
-O número do WhatsApp e o Instagram (@cearagrillrestaurante) ficam no `build/build.py`.
+## Depois da venda: ativar WhatsApp e Instagram
+
+1. No começo do `build/build.py`, preencha:
+   ```python
+   WHATSAPP = '11930056723'
+   INSTAGRAM = 'cearagrillrestaurante'
+   ```
+2. Rode `python3 build/build.py`.
+3. Envie o `index.html` novo. Os botões passam a abrir o WhatsApp do restaurante, o Instagram aparece no site e o Google pode indexar a página.
 
 ## Como publicar
 
@@ -38,7 +48,6 @@ O número do WhatsApp e o Instagram (@cearagrillrestaurante) ficam no `build/bui
 
 ## Confirmar com o restaurante antes de publicar
 
-- Se o (11) 93005-6723 é WhatsApp
 - Horário de funcionamento e dias e valor da feijoada (não estão nos flyers)
 - "Filé de peixe panga frito": no flyer está escrito "Panca"
 - Se "Costelinha assada, frango assado, linguiça assada e calabresa" é uma escolha entre as carnes ou um prato com todas

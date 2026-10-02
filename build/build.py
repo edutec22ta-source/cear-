@@ -1,6 +1,18 @@
-import base64, re, html, sys
+import base64, re, html, json, sys
 from urllib.parse import quote
 from pathlib import Path
+
+# ------------------------------------------------------------------
+# Contatos do restaurante
+# Vazio = site em demonstração: o site mostra (99) 99999-9999, esconde o
+# Instagram, os botões do WhatsApp mostram uma prévia da mensagem e o
+# Google não indexa a página.
+# Depois da venda, preencha e rode de novo:
+#   WHATSAPP = '11930056723'
+#   INSTAGRAM = 'cearagrillrestaurante'
+# ------------------------------------------------------------------
+WHATSAPP = ''
+INSTAGRAM = ''
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / 'build'))
@@ -88,16 +100,57 @@ def render_menu():
     return '\n'.join('      ' + linha for linha in out)
 
 
-WA_NUMBER = '5511930056723'
+def so_digitos(texto):
+    d = re.sub(r'\D', '', texto)
+    if d.startswith('55') and len(d) in (12, 13):
+        d = d[2:]
+    return d
+
+
+def formatar_telefone(d):
+    if len(d) == 11:
+        return f'({d[:2]}) {d[2:7]}-{d[7:]}'
+    if len(d) == 10:
+        return f'({d[:2]}) {d[2:6]}-{d[6:]}'
+    raise SystemExit(f'WHATSAPP inválido: {WHATSAPP!r} (use DDD + número, ex.: 11930056723)')
+
+
+DDD_NUMERO = so_digitos(WHATSAPP)
+DEMO = not DDD_NUMERO
+WA_NUMBER = '' if DEMO else '55' + DDD_NUMERO
+PHONE_DISPLAY = '(99) 99999-9999' if DEMO else formatar_telefone(DDD_NUMERO)
+INSTA = INSTAGRAM.strip().lstrip('@').strip('/')
+INSTAGRAM_URL = f'https://www.instagram.com/{INSTA}/' if INSTA else ''
+
+ld = {
+    '@context': 'https://schema.org',
+    '@type': 'Restaurant',
+    'name': 'Restaurante Ceará Grill',
+    'servesCuisine': ['Brasileira', 'Churrasco'],
+    'priceRange': 'R$ 5 a R$ 47',
+    'address': {
+        '@type': 'PostalAddress',
+        'streetAddress': 'Av. Guarapiranga, 2598',
+        'addressLocality': 'São Paulo',
+        'addressRegion': 'SP',
+        'postalCode': '04911-005',
+        'addressCountry': 'BR',
+    },
+}
+if not DEMO:
+    ld['telephone'] = f'+55 {DDD_NUMERO[:2]} {PHONE_DISPLAY.split(" ", 1)[1]}'
+if INSTAGRAM_URL:
+    ld['sameAs'] = [INSTAGRAM_URL]
+
 values = {
     'LOGO': data_uri('assets/logo-320.webp', 'image/webp'),
     'FEIJOADA': data_uri('assets/feijoada.webp', 'image/webp'),
     'FAVICON': data_uri('assets/favicon-64.png', 'image/png'),
     'WA_NUMBER': WA_NUMBER,
-    'PHONE_DISPLAY': '(11) 93005-6723',
-    'PHONE_E164': '+55 11 93005-6723',
-    'INSTAGRAM_URL': 'https://www.instagram.com/cearagrillrestaurante/',
-    'INSTAGRAM_HANDLE': '@cearagrillrestaurante',
+    'PHONE_DISPLAY': PHONE_DISPLAY,
+    'INSTAGRAM_URL': INSTAGRAM_URL,
+    'INSTAGRAM_HANDLE': f'@{INSTA}',
+    'JSON_LD': json.dumps(ld, ensure_ascii=False, indent=2).replace('</', '<\\/'),
     'GMAPS': esc('https://www.google.com/maps/search/?api=1&query=' + quote('Restaurante Ceará Grill, Av. Guarapiranga, 2598, São Paulo - SP, 04911-005', safe='')),
     'WAZE': esc('https://waze.com/ul?q=' + quote('Av. Guarapiranga, 2598, São Paulo - SP', safe='') + '&navigate=yes'),
     'MENU': render_menu(),
@@ -107,10 +160,20 @@ values = {
 
 
 def wa_link(m):
-    return f'https://wa.me/{WA_NUMBER}?text=' + quote(m.group(1), safe='')
+    texto = m.group(1)
+    if DEMO:  # sem número: o link leva ao pedido e o JS mostra a prévia da mensagem
+        return f'href="#pedido" data-wa="{esc(texto)}"'
+    return f'href="https://wa.me/{WA_NUMBER}?text={quote(texto, safe="")}" target="_blank" rel="noopener"'
 
 
-out = re.sub(r'\{\{WA\|([^}]*)\}\}', wa_link, tpl)
+# Trechos que só aparecem em um dos modos: {{#DEMO}}...{{/DEMO}} e {{#INSTAGRAM}}...{{/INSTAGRAM}}
+blocos = {'DEMO': DEMO, 'INSTAGRAM': bool(INSTA)}
+out = re.sub(r'^[ \t]*\{\{#(\w+)\}\}[ \t]*\n(.*?)^[ \t]*\{\{/\1\}\}[ \t]*\n',
+             lambda m: m.group(2) if blocos[m.group(1)] else '', tpl, flags=re.M | re.S)
+
+total_wa = out.count('{{WA|')
+out, trocados = re.subn(r'href="\{\{WA\|([^}]*)\}\}" target="_blank" rel="noopener"', wa_link, out)
+assert trocados == total_wa, f'{total_wa - trocados} link(s) do WhatsApp fora do padrão'
 for k, v in values.items():
     out = out.replace('{{' + k + '}}', v)
 
@@ -118,4 +181,5 @@ left = re.findall(r'\{\{[^}]+\}\}', out)
 assert not left, left
 dest = ROOT / 'index.html'
 dest.write_text(out, encoding='utf-8')
-print('ok:', dest.name, round(dest.stat().st_size / 1024), 'KB')
+modo = 'demonstração' if DEMO else f'WhatsApp {PHONE_DISPLAY}'
+print('ok:', dest.name, round(dest.stat().st_size / 1024), 'KB |', modo, '| Instagram:', f'@{INSTA}' if INSTA else 'oculto')
